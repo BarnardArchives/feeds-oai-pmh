@@ -183,13 +183,17 @@ function feeds_oai_pmh_identify($baseurl) {
 function feeds_oai_pmh_get_sets($baseurl) {
   $sets = array();
   $url = "$baseurl?verb=ListSets";
-  $result = drupal_http_request($url);
+  $d = file_get_contents($url);
+  $d = iconv("UTF-8", "UTF-8//IGNORE", utf8_encode($d));
+  $xml = simplexml_load_string($d);
+  
+  /*$result = drupal_http_request($url);
 
   // Return false on error
   if ($result->code != 200) {
     return FALSE;
   }
-  $xml = simplexml_load_string($result->data);
+  $xml = simplexml_load_string($result->data);*/
   if (!$xml) {
     return FALSE;
   }

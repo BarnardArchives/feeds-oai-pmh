@@ -251,8 +251,8 @@ class FeedsOAIHTTPFetcher extends FeedsHTTPFetcher {
     $form['set'] = array(
       '#type' => 'select',
       '#title' => t('Set to fetch'),
-      '#default_value' => isset($source_config['set']) ? $source_config['set'] : NULL,
-      '#options' => isset($sets_options) ? $sets_options : array(),
+      '#default_value' => isset($source_config['set']) ? $source_config['set'] : 0,
+      '#options' => isset($sets_options) ? $sets_options : array(0 => 'all sets'),
       '#suffix' => '',
       '#ajax' => array(
         'callback' => 'feeds_oai_pmh_ajax_callback',
