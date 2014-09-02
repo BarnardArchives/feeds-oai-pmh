@@ -1,6 +1,5 @@
 <?php
 
-
 /**
  * Functions to connect and process data from OAI-PMH repositories.
  * See http://www.openarchives.org/OAI/openarchivesprotocol.html
