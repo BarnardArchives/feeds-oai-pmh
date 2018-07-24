@@ -33,7 +33,7 @@ function feeds_oai_pmh_feeds_plugins() {
  * Return a "drupalized" hierarchic options form element for the sets in a repository.
  */
 function feeds_oai_pmh_sets_options($sets) {
-  $options = array('0' => t('[all sets]'));
+  $options = array('*' => t('[all sets]'));
   if (is_array($sets)) {
     ksort($sets);
     $last_depth = 0;
@@ -53,7 +53,7 @@ function feeds_oai_pmh_ajax_callback($form, $form_state) {
   require_once(drupal_get_path('module', 'feeds_oai_pmh') . '/feeds_oai_pmh.inc');
 
   // Validate the repository.
-  $oai_source_url = !empty($form_state['values']['feeds']['FeedsOAIHTTPFetcher']['source']) ? $form_state['values']['feeds']['FeedsOAIHTTPFetcher']['source'] : 0 ;
+  $oai_source_url = $form_state['values']['feeds']['FeedsOAIHTTPFetcher']['source'];
   
   $result = feeds_oai_pmh_identify($oai_source_url);
 

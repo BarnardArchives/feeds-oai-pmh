@@ -15,10 +15,24 @@ class FeedsOAIParser extends FeedsParser {
    * Implementation of FeedsParser::parse().
    */
   public function parse(FeedsSource $source, FeedsFetcherResult $fetcher_result) {
+    
+    $importer = $source->importer();
+    $importer_config = $importer->getConfig();
+
+
+    $user_defined_mappings = Array();
+    foreach($importer_config['processor']['config']['mappings'] as $k=>$v)
+    {
+      $user_defined_mappings[] = $v['source'];
+    }
+
     $result = new FeedsParserResult();
 
     require_once drupal_get_path('module', 'feeds_oai_pmh') . '/feeds_oai_pmh.inc';
-    $feed = feeds_oai_pmh_parse($fetcher_result->getRaw());
+
+
+    $feed = feeds_oai_pmh_parse($fetcher_result->getRaw(), $user_defined_mappings);
+
     if (!$feed) {
       // No items, return
       return $result;
@@ -69,6 +83,9 @@ class FeedsOAIParser extends FeedsParser {
     self::loadMappers();
     $sources = array();
     drupal_alter('feeds_parser_sources', $sources, feeds_importer($this->id)->config['content_type']);
+
+    return false;
+
     $sources += array(
       'guid' => array(
         'name' => t('Repository Record identifier'),

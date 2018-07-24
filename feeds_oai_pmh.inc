@@ -1,5 +1,6 @@
 <?php
 
+
 /**
  * Functions to connect and process data from OAI-PMH repositories.
  * See http://www.openarchives.org/OAI/openarchivesprotocol.html
@@ -182,17 +183,13 @@ function feeds_oai_pmh_identify($baseurl) {
 function feeds_oai_pmh_get_sets($baseurl) {
   $sets = array();
   $url = "$baseurl?verb=ListSets";
-  $d = file_get_contents($url);
-  $d = iconv("UTF-8", "UTF-8//IGNORE", utf8_encode($d));
-  $xml = simplexml_load_string($d);
-  
-  /*$result = drupal_http_request($url);
+  $result = drupal_http_request($url);
 
   // Return false on error
   if ($result->code != 200) {
     return FALSE;
   }
-  $xml = simplexml_load_string($result->data);*/
+  $xml = simplexml_load_string($result->data);
   if (!$xml) {
     return FALSE;
   }
@@ -216,7 +213,7 @@ function feeds_oai_pmh_get_sets($baseurl) {
 /**
  * Parse a raw response from an OAI-PMH endpoint into an array of items.
  */
-function feeds_oai_pmh_parse($raw_xml) {
+function feeds_oai_pmh_parse($raw_xml,$custom_elements = null) {
   // Items array
   $items = array();
 
@@ -245,6 +242,13 @@ function feeds_oai_pmh_parse($raw_xml) {
     }
 
     $xml_dc_metadata = $xml_item->metadata->children('http://www.openarchives.org/OAI/2.0/oai_dc/')->children('http://purl.org/dc/elements/1.1/');
+    $no_dc_xml_metadata = $xml_item->metadata->children('http://www.openarchives.org/OAI/2.0/oai_dc/')->children();
+    $dcterms_xml_metadata = $xml_item->metadata->children('http://www.openarchives.org/OAI/2.0/oai_dc/')->children('http://purl.org/dc/terms/');
+    
+    //error_log('metadata: '.print_r($xml_dc_metadata,1));
+    //error_log('all metadata: '.print_r($all_xml_metadata,1));
+    //error_log('dcterms metadata: '.print_r($dcterms_xml_metadata,1));
+
     $item = array(
       'guid' => (string)$xml_item->header->identifier,
       'datestamp' => strtotime((string)$xml_item->header->datestamp),
@@ -269,15 +273,55 @@ function feeds_oai_pmh_parse($raw_xml) {
       'creator', 'subject', 'description', 'publisher', 'contributor',
       'date', 'type', 'format', 'identifier', 'source', 'language', 'relation',
       'coverage', 'rights');
+
+    if($custom_elements)
+      $elements = array_merge($elements,$custom_elements);
+
+    $clean_elements = Array();
+
+    foreach($elements as $k=>$v)
+    {
+      if(substr($v,0,3) == "dc:")
+      {
+        $clean_elements[] = substr($v,3);
+      }
+      elseif(substr($v,0,8) == "dcterms:")
+      {
+        $clean_elements[] = substr($v,8);
+      }
+      else
+      {
+        $clean_elements[] = $v;
+      }
+    }
+
+    $elements = array_unique($clean_elements);
+
+
     foreach ($elements as $element) {
-      if (isset($xml_dc_metadata->$element)) {
+      if (isset($xml_dc_metadata->$element) && $xml_dc_metadata->$element) {
         $item[$element] = array();
         foreach ($xml_dc_metadata->$element as $value) {
           $value = (string)$value;
-          // TODO: add callback functions to further process values (like convert dates to timestamps, split subjects, etc.)
-          $item[$element][$value] = $value;
+          $item["dc:".$element][] = $value;
         }
-        $item[$element] = array_values($item[$element]);
+        $item["dc:".$element] = $item["dc:".$element][0];
+      }
+      elseif (isset($no_dc_xml_metadata->$element) && $no_dc_xml_metadata->$element) {
+        $item[$element] = array();
+        foreach ($no_dc_xml_metadata->$element as $value) {
+          $value = (string)$value;
+          $item[$element][] = $value;
+        }
+        $item[$element] = $item[$element][0];
+      }
+      elseif (isset($dcterms_xml_metadata->$element) && $dcterms_xml_metadata->$element) {
+        $item[$element] = array();
+        foreach ($dcterms_xml_metadata->$element as $value) {
+          $value = (string)$value;
+          $item["dcterms:".$element][] = $value;
+        }
+        $item["dcterms:".$element] = $item["dcterms:".$element][0];
       }
     }
 

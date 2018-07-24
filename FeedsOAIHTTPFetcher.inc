@@ -250,9 +250,10 @@ class FeedsOAIHTTPFetcher extends FeedsHTTPFetcher {
 
     $form['set'] = array(
       '#type' => 'select',
+      '#validated' => TRUE,
       '#title' => t('Set to fetch'),
-      '#default_value' => isset($source_config['set']) ? $source_config['set'] : 0,
-      '#options' => isset($sets_options) ? $sets_options : array(0 => 'all sets'),
+      '#default_value' => isset($source_config['set']) ? $source_config['set'] : NULL,
+      '#options' => isset($sets_options) ? $sets_options : array(),
       '#suffix' => '',
       '#ajax' => array(
         'callback' => 'feeds_oai_pmh_ajax_callback',
@@ -312,7 +313,7 @@ class FeedsOAIHTTPFetcher extends FeedsHTTPFetcher {
           option is used.'),
       '#suffix' => '</div>',
     );
-
+    //watchdog('form', "FORM: ".print_r($form,1));
     return $form;
   }
 
